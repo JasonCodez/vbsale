@@ -578,10 +578,11 @@ a { text-decoration: none; color: inherit; }
   opacity: 0.5;
 }
 
-.card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+.card-category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .stock-badge {
@@ -593,7 +594,7 @@ a { text-decoration: none; color: inherit; }
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  backdrop-filter: blur(8px);
+  white-space: nowrap;
 }
 
 .stock-badge::before {

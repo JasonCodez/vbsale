@@ -227,10 +227,12 @@
       <article class="card" data-id="${p.id}" role="button" tabindex="0" aria-label="${esc(p.name)}">
         <div class="card-image">
           ${imgHTML}
-          <div class="card-badge"><span class="stock-badge ${badge.cls}">${badge.label}</span></div>
         </div>
         <div class="card-body">
-          <div class="card-category">${esc(p.category)}</div>
+          <div class="card-category-row">
+            <div class="card-category">${esc(p.category)}</div>
+            <span class="stock-badge ${badge.cls}">${badge.label}</span>
+          </div>
           <h2 class="card-name">${esc(p.name)}</h2>
           ${p.description ? `<p class="card-desc">${esc(p.description)}</p>` : ''}
           <div class="card-footer">
