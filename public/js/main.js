@@ -5,6 +5,8 @@
   let allProducts = [];
   let activeCategory = 'all';
   let searchQuery = '';
+  let currentPage = 1;
+  const PAGE_SIZE = 20;
 
   // ── DOM refs ───────────────────────────────────────────────────────────────
   const grid         = document.getElementById('products-grid');
@@ -185,17 +187,24 @@
       return matchCat && matchQ;
     });
 
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const paged = filtered.slice(start, start + PAGE_SIZE);
+
     resultsInfo.textContent = filtered.length === 0
-      ? '' : `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
+      ? '' : `${start + 1}–${start + paged.length} of ${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
 
     if (filtered.length === 0) {
       grid.innerHTML = '';
+      renderPagination(0, 0);
       showEmpty(true);
       return;
     }
 
     showEmpty(false);
-    grid.innerHTML = filtered.map((p, i) => cardHTML(p, i)).join('');
+    grid.innerHTML = paged.map((p, i) => cardHTML(p, i)).join('');
 
     grid.querySelectorAll('.card').forEach(card => {
       card.addEventListener('click', () => {
@@ -209,6 +218,58 @@
     });
 
     observeCards();
+    renderPagination(totalPages, filtered.length);
+  }
+
+  function renderPagination(totalPages, totalItems) {
+    let container = document.getElementById('pagination');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'pagination';
+      container.className = 'pagination';
+      grid.parentNode.appendChild(container);
+    }
+
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const prevDisabled = currentPage <= 1 ? ' disabled' : '';
+    const nextDisabled = currentPage >= totalPages ? ' disabled' : '';
+
+    let pagesHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      pagesHTML += `<button class="page-btn${i === currentPage ? ' active' : ''}" data-page="${i}">${i}</button>`;
+    }
+
+    container.innerHTML = `
+      <button class="page-arrow${prevDisabled}" id="page-prev">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      ${pagesHTML}
+      <button class="page-arrow${nextDisabled}" id="page-next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>`;
+
+    document.getElementById('page-prev').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; renderProducts(); scrollToGrid(); }
+    });
+    document.getElementById('page-next').addEventListener('click', () => {
+      if (currentPage < totalPages) { currentPage++; renderProducts(); scrollToGrid(); }
+    });
+    container.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = parseInt(btn.dataset.page);
+        renderProducts();
+        scrollToGrid();
+      });
+    });
+  }
+
+  function scrollToGrid() {
+    const filterBar = document.querySelector('.filter-bar');
+    if (filterBar) filterBar.scrollIntoView({ behavior: 'smooth' });
   }
 
   function cardHTML(p, i) {
@@ -267,6 +328,7 @@
         pillsWrap.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         activeCategory = btn.dataset.category;
+        currentPage = 1;
         renderProducts();
       });
     });
@@ -429,6 +491,7 @@
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value;
       searchClear.classList.toggle('visible', !!searchQuery);
+      currentPage = 1;
       renderProducts();
     });
 

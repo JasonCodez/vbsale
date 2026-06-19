@@ -669,6 +669,65 @@ a { text-decoration: none; color: inherit; }
 .card-stock-text.low  { color: #92600D; }
 .card-stock-text.out  { color: #B91C1C; }
 
+/* ─── Pagination ───────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 36px;
+  padding: 8px 0;
+}
+
+.page-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text);
+  transition: all var(--transition);
+}
+
+.page-arrow:hover:not(.disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.page-arrow.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.page-btn {
+  min-width: 38px;
+  height: 38px;
+  border-radius: 100px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.page-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.page-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(20,184,166,0.3);
+}
+
 /* ─── States ────────────────────────────────────────────────────────────── */
 .state-empty, .state-loading {
   text-align: center;
