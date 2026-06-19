@@ -38,6 +38,16 @@ const upload = multer({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Analytics — track public page views (must be before express.static)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.path === '/') {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    analytics.recordPageView(ip, req.headers.referer, req.headers['user-agent'], req.path);
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 app.use(cookieSession({
@@ -51,15 +61,6 @@ const requireAuth = (req, res, next) => {
   if (req.session && req.session.isAdmin) return next();
   res.status(401).json({ error: 'Unauthorized' });
 };
-
-// Analytics — track public page views
-app.use((req, res, next) => {
-  if (req.method === 'GET' && req.path === '/' ) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    analytics.recordPageView(ip, req.headers.referer, req.headers['user-agent'], req.path);
-  }
-  next();
-});
 
 // ── PUBLIC API ────────────────────────────────────────────────────────────────
 
