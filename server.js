@@ -63,33 +63,33 @@ app.use((req, res, next) => {
 
 // ── PUBLIC API ────────────────────────────────────────────────────────────────
 
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    res.json(db.getProducts(req.query));
+    res.json(await db.getProducts(req.query));
   } catch {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
 
-app.get('/api/categories', (req, res) => {
+app.get('/api/categories', async (req, res) => {
   try {
-    res.json(db.getCategories());
+    res.json(await db.getCategories());
   } catch {
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
 
-app.get('/api/settings', (req, res) => {
+app.get('/api/settings', async (req, res) => {
   try {
-    res.json(db.getSettings());
+    res.json(await db.getSettings());
   } catch {
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });
 
-app.get('/api/reviews', (req, res) => {
+app.get('/api/reviews', async (req, res) => {
   try {
-    res.json(db.getReviews());
+    res.json(await db.getReviews());
   } catch {
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
@@ -104,12 +104,12 @@ app.post('/api/track/product/:id', async (req, res) => {
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
   try {
-    const user = db.getAdminUser(username);
+    const user = await db.getAdminUser(username);
     if (!user || !bcrypt.compareSync(password, user.password_hash))
       return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -135,29 +135,29 @@ app.get('/api/auth/status', (req, res) => {
 
 // ── ADMIN API ─────────────────────────────────────────────────────────────────
 
-app.get('/api/admin/products', requireAuth, (req, res) => {
+app.get('/api/admin/products', requireAuth, async (req, res) => {
   try {
-    res.json(db.getProducts());
+    res.json(await db.getProducts());
   } catch {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
 
-app.post('/api/admin/products', requireAuth, (req, res) => {
+app.post('/api/admin/products', requireAuth, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Product name is required' });
   try {
-    res.status(201).json(db.createProduct(req.body));
+    res.status(201).json(await db.createProduct(req.body));
   } catch {
     res.status(500).json({ error: 'Failed to create product' });
   }
 });
 
-app.put('/api/admin/products/:id', requireAuth, (req, res) => {
+app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Product name is required' });
   try {
-    const product = db.updateProduct(req.params.id, req.body);
+    const product = await db.updateProduct(req.params.id, req.body);
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
   } catch {
@@ -167,7 +167,7 @@ app.put('/api/admin/products/:id', requireAuth, (req, res) => {
 
 app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
   try {
-    const removed = db.deleteProduct(req.params.id);
+    const removed = await db.deleteProduct(req.params.id);
     if (!removed) return res.status(404).json({ error: 'Product not found' });
 
     const urls = removed.images || (removed.image_url ? [removed.image_url] : []);
@@ -235,7 +235,7 @@ app.get('/api/admin/analytics/daily', requireAuth, async (req, res) => {
 app.get('/api/admin/analytics/top-products', requireAuth, async (req, res) => {
   try {
     const products = await analytics.getTopProducts(10);
-    const all = db.getProducts();
+    const all = await db.getProducts();
     const result = products.map(tp => {
       const p = all.find(x => x.id === tp.product_id);
       return { ...tp, name: p ? p.name : `Product #${tp.product_id}` };
@@ -254,27 +254,27 @@ app.get('/api/admin/analytics/recent', requireAuth, async (req, res) => {
   catch { res.status(500).json({ error: 'Failed to fetch recent visits' }); }
 });
 
-app.get('/api/admin/reviews', requireAuth, (req, res) => {
+app.get('/api/admin/reviews', requireAuth, async (req, res) => {
   try {
-    res.json(db.getReviews());
+    res.json(await db.getReviews());
   } catch {
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
 
-app.post('/api/admin/reviews', requireAuth, (req, res) => {
+app.post('/api/admin/reviews', requireAuth, async (req, res) => {
   const { author, text } = req.body;
   if (!author || !text) return res.status(400).json({ error: 'Author and text are required' });
   try {
-    res.status(201).json(db.createReview(req.body));
+    res.status(201).json(await db.createReview(req.body));
   } catch {
     res.status(500).json({ error: 'Failed to create review' });
   }
 });
 
-app.delete('/api/admin/reviews/:id', requireAuth, (req, res) => {
+app.delete('/api/admin/reviews/:id', requireAuth, async (req, res) => {
   try {
-    const removed = db.deleteReview(req.params.id);
+    const removed = await db.deleteReview(req.params.id);
     if (!removed) return res.status(404).json({ error: 'Review not found' });
     res.json({ success: true });
   } catch {
@@ -282,26 +282,26 @@ app.delete('/api/admin/reviews/:id', requireAuth, (req, res) => {
   }
 });
 
-app.put('/api/admin/settings', requireAuth, (req, res) => {
+app.put('/api/admin/settings', requireAuth, async (req, res) => {
   try {
-    db.updateSettings(req.body);
+    await db.updateSettings(req.body);
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to update settings' });
   }
 });
 
-app.put('/api/admin/password', requireAuth, (req, res) => {
+app.put('/api/admin/password', requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword)
     return res.status(400).json({ error: 'Both current and new passwords are required' });
 
   try {
-    const user = db.getAdminUser(req.session.username);
+    const user = await db.getAdminUser(req.session.username);
     if (!bcrypt.compareSync(currentPassword, user.password_hash))
       return res.status(401).json({ error: 'Current password is incorrect' });
 
-    db.updateAdminPassword(req.session.username, bcrypt.hashSync(newPassword, 10));
+    await db.updateAdminPassword(req.session.username, bcrypt.hashSync(newPassword, 10));
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to update password' });

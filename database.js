@@ -1,38 +1,80 @@
 const fs   = require('fs');
 const path = require('path');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-const DB_FILE = path.join(__dirname, 'catalogue.json');
+const LOCAL_FILE = path.join(__dirname, 'catalogue.json');
 
-function read() {
-  try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
-  catch { return null; }
+const r2 = new S3Client({
+  region:      'auto',
+  endpoint:    `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+const BUCKET = process.env.R2_BUCKET_NAME;
+const R2_KEY = 'data/catalogue.json';
+
+const DEFAULT_DATA = {
+  products: [],
+  reviews: [],
+  settings: {
+    store_name:        'My Store',
+    store_tagline:     'Quality Products for Every Need',
+    store_description: 'Browse our curated selection of quality merchandise. Find exactly what you need.',
+    contact_email:     '',
+    contact_phone:     ''
+  },
+  admin_users: [],
+  _nextProductId: 1,
+  _nextReviewId:  1,
+  _nextUserId:    1
+};
+
+let cache = null;
+let dirty = false;
+let flushTimer = null;
+
+async function load() {
+  if (cache) return cache;
+  try {
+    const res = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: R2_KEY }));
+    const body = await res.Body.transformToString();
+    cache = JSON.parse(body);
+  } catch {
+    try {
+      cache = JSON.parse(fs.readFileSync(LOCAL_FILE, 'utf8'));
+    } catch {
+      cache = { ...DEFAULT_DATA };
+    }
+  }
+  return cache;
 }
 
-function write(data) {
-  const tmp = DB_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, DB_FILE);
+function scheduleFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(async () => {
+    flushTimer = null;
+    if (!dirty || !cache) return;
+    dirty = false;
+    try {
+      await r2.send(new PutObjectCommand({
+        Bucket:      BUCKET,
+        Key:         R2_KEY,
+        Body:        JSON.stringify(cache, null, 2),
+        ContentType: 'application/json',
+      }));
+    } catch (err) {
+      console.error('Catalogue R2 flush error:', err);
+      dirty = true;
+    }
+  }, 2000);
 }
 
-// Initialise the file if it doesn't exist yet
-(function init() {
-  if (read()) return;
-  write({
-    products: [],
-    reviews: [],
-    settings: {
-      store_name:        'My Store',
-      store_tagline:     'Quality Products for Every Need',
-      store_description: 'Browse our curated selection of quality merchandise. Find exactly what you need.',
-      contact_email:     '',
-      contact_phone:     ''
-    },
-    admin_users: [],
-    _nextProductId: 1,
-    _nextReviewId:  1,
-    _nextUserId:    1
-  });
-})();
+function markDirty() {
+  dirty = true;
+  scheduleFlush();
+}
 
 // ── Products ─────────────────────────────────────────────────────────────────
 
@@ -42,8 +84,8 @@ function normalizeProduct(p) {
   return p;
 }
 
-function getProducts({ category, search } = {}) {
-  const { products } = read();
+async function getProducts({ category, search } = {}) {
+  const { products } = await load();
   let list = [...products].map(normalizeProduct).reverse();
   if (category && category !== 'all')
     list = list.filter(p => p.category === category);
@@ -57,17 +99,19 @@ function getProducts({ category, search } = {}) {
   return list;
 }
 
-function getProductById(id) {
-  const p = read().products.find(p => p.id === Number(id));
+async function getProductById(id) {
+  const data = await load();
+  const p = data.products.find(p => p.id === Number(id));
   return p ? normalizeProduct(p) : null;
 }
 
-function getCategories() {
-  return [...new Set(read().products.map(p => p.category))].sort();
+async function getCategories() {
+  const data = await load();
+  return [...new Set(data.products.map(p => p.category))].sort();
 }
 
-function createProduct({ name, description, price, category, stock, images, image_url, fb_url }) {
-  const data = read();
+async function createProduct({ name, description, price, category, stock, images, image_url, fb_url }) {
+  const data = await load();
   const id   = data._nextProductId++;
   const now  = new Date().toISOString();
   const product = {
@@ -83,12 +127,12 @@ function createProduct({ name, description, price, category, stock, images, imag
     updated_at:  now
   };
   data.products.push(product);
-  write(data);
+  markDirty();
   return product;
 }
 
-function updateProduct(id, { name, description, price, category, stock, images, image_url, fb_url }) {
-  const data = read();
+async function updateProduct(id, { name, description, price, category, stock, images, image_url, fb_url }) {
+  const data = await load();
   const idx  = data.products.findIndex(p => p.id === Number(id));
   if (idx === -1) return null;
   data.products[idx] = {
@@ -102,27 +146,28 @@ function updateProduct(id, { name, description, price, category, stock, images, 
     fb_url:      fb_url            || '',
     updated_at:  new Date().toISOString()
   };
-  write(data);
+  markDirty();
   return data.products[idx];
 }
 
-function deleteProduct(id) {
-  const data = read();
+async function deleteProduct(id) {
+  const data = await load();
   const idx  = data.products.findIndex(p => p.id === Number(id));
   if (idx === -1) return null;
   const [removed] = data.products.splice(idx, 1);
-  write(data);
+  markDirty();
   return removed;
 }
 
 // ── Reviews ───────────────────────────────────────────────────────────────────
 
-function getReviews() {
-  return read().reviews || [];
+async function getReviews() {
+  const data = await load();
+  return data.reviews || [];
 }
 
-function createReview({ author, text, rating }) {
-  const data = read();
+async function createReview({ author, text, rating }) {
+  const data = await load();
   if (!data.reviews) data.reviews = [];
   if (!data._nextReviewId) data._nextReviewId = 1;
   const id = data._nextReviewId++;
@@ -134,53 +179,55 @@ function createReview({ author, text, rating }) {
     created_at: new Date().toISOString()
   };
   data.reviews.push(review);
-  write(data);
+  markDirty();
   return review;
 }
 
-function deleteReview(id) {
-  const data = read();
+async function deleteReview(id) {
+  const data = await load();
   if (!data.reviews) return null;
   const idx = data.reviews.findIndex(r => r.id === Number(id));
   if (idx === -1) return null;
   const [removed] = data.reviews.splice(idx, 1);
-  write(data);
+  markDirty();
   return removed;
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-function getSettings() {
-  return read().settings || {};
+async function getSettings() {
+  const data = await load();
+  return data.settings || {};
 }
 
-function updateSettings(updates) {
-  const data = read();
+async function updateSettings(updates) {
+  const data = await load();
   data.settings = { ...data.settings, ...updates };
-  write(data);
+  markDirty();
 }
 
 // ── Admin users ───────────────────────────────────────────────────────────────
 
-function getAdminUser(username) {
-  return read().admin_users.find(u => u.username === username) || null;
+async function getAdminUser(username) {
+  const data = await load();
+  return data.admin_users.find(u => u.username === username) || null;
 }
 
-function createAdminUser(username, passwordHash) {
-  const data = read();
+async function createAdminUser(username, passwordHash) {
+  const data = await load();
   const id   = data._nextUserId++;
   const user = { id, username, password_hash: passwordHash };
   data.admin_users.push(user);
-  write(data);
+  markDirty();
   return user;
 }
 
-function updateAdminPassword(username, passwordHash) {
-  const data = read();
+async function updateAdminPassword(username, passwordHash) {
+  const data = await load();
   const user = data.admin_users.find(u => u.username === username);
   if (!user) return false;
   user.password_hash = passwordHash;
-  write(data);
+  markDirty();
   return true;
 }
 
