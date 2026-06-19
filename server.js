@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const bcrypt  = require('bcryptjs');
 const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const db        = require('./database');
 const analytics = require('./analytics');
@@ -12,22 +13,22 @@ const analytics = require('./analytics');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-// Multer — image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename:    (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  }
+// ── R2 storage ──────────────────────────────────────────────────────────────
+const r2 = new S3Client({
+  region:      'auto',
+  endpoint:    `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
 });
+const R2_BUCKET    = process.env.R2_BUCKET_NAME;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // e.g. https://pub-xxx.r2.dev
 
+// Multer — buffer uploads in memory for R2
 const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (/^image\/(jpeg|jpg|png|gif|webp)$/.test(file.mimetype)) cb(null, true);
     else cb(new Error('Only image files are allowed'));
@@ -39,11 +40,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
-app.use(session({
-  secret:            process.env.SESSION_SECRET || 'dev-secret-change-before-live',
-  resave:            false,
-  saveUninitialized: false,
-  cookie:            { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
+app.use(cookieSession({
+  name:   'session',
+  keys:   [process.env.SESSION_SECRET || 'dev-secret-change-before-live'],
+  maxAge: 24 * 60 * 60 * 1000,
+  httpOnly: true,
 }));
 
 const requireAuth = (req, res, next) => {
@@ -121,7 +122,8 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
+  req.session = null;
+  res.json({ success: true });
 });
 
 app.get('/api/auth/status', (req, res) => {
@@ -163,16 +165,20 @@ app.put('/api/admin/products/:id', requireAuth, (req, res) => {
   }
 });
 
-app.delete('/api/admin/products/:id', requireAuth, (req, res) => {
+app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
   try {
     const removed = db.deleteProduct(req.params.id);
     if (!removed) return res.status(404).json({ error: 'Product not found' });
 
     const urls = removed.images || (removed.image_url ? [removed.image_url] : []);
     for (const url of urls) {
-      if (url && url.startsWith('/uploads/')) {
-        const imgPath = path.join(__dirname, 'public', url);
-        if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+      if (url && url.includes(R2_PUBLIC_URL)) {
+        const key = url.replace(`${R2_PUBLIC_URL}/`, '');
+        try {
+          await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+        } catch (err) {
+          console.error('R2 delete error:', err);
+        }
       }
     }
 
@@ -182,16 +188,32 @@ app.delete('/api/admin/products/:id', requireAuth, (req, res) => {
   }
 });
 
-app.post('/api/admin/upload', requireAuth, upload.single('image'), (req, res) => {
+app.post('/api/admin/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: `/uploads/${req.file.filename}` });
+  const key = `uploads/${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
+  try {
+    await r2.send(new PutObjectCommand({
+      Bucket:      R2_BUCKET,
+      Key:         key,
+      Body:        req.file.buffer,
+      ContentType: req.file.mimetype,
+    }));
+    res.json({ url: `${R2_PUBLIC_URL}/${key}` });
+  } catch (err) {
+    console.error('R2 upload error:', err);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
 });
 
-app.delete('/api/admin/upload', requireAuth, (req, res) => {
+app.delete('/api/admin/upload', requireAuth, async (req, res) => {
   const { url } = req.body;
-  if (url && url.startsWith('/uploads/')) {
-    const imgPath = path.join(__dirname, 'public', url);
-    if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+  if (url && url.includes(R2_PUBLIC_URL)) {
+    const key = url.replace(`${R2_PUBLIC_URL}/`, '');
+    try {
+      await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+    } catch (err) {
+      console.error('R2 delete error:', err);
+    }
   }
   res.json({ success: true });
 });
