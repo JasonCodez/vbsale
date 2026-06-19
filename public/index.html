@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Product Catalogue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <img src="/uploads/vb_sales_logo.png" alt="Logo" class="logo-mark">
+        <span class="logo-text" id="nav-store-name">Loading…</span>
+      </a>
+      <div class="nav-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search products…" class="search-input" autocomplete="off">
+        <button class="search-clear" id="search-clear" aria-label="Clear search">✕</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-reviews-panel" id="hero-reviews-panel">
+        <p class="reviews-label">Customer Reviews</p>
+        <div id="hero-reviews"></div>
+        <div class="reviews-nav">
+          <button class="reviews-arrow" id="reviews-prev" aria-label="Previous review">&#8249;</button>
+          <div class="reviews-dots" id="reviews-dots"></div>
+          <button class="reviews-arrow" id="reviews-next" aria-label="Next review">&#8250;</button>
+        </div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-badge">Browse Our Catalogue</div>
+        <h1 class="hero-title" id="hero-store-name">My Store</h1>
+        <p class="hero-tagline" id="hero-tagline">Quality Products for Every Need</p>
+        <p class="hero-desc" id="hero-desc"></p>
+        <a href="#catalogue" class="hero-cta">
+          View All Products
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+    <div class="hero-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="wave-path" d="M0,50 C360,20 720,60 1080,30 C1260,15 1380,45 1440,40 L1440,70 L0,70 Z"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Mobile Reviews Strip -->
+  <div class="mobile-reviews-strip" id="mobile-reviews-strip">
+    <div class="mobile-reviews-inner">
+      <p class="reviews-label">Customer Reviews</p>
+      <div id="hero-reviews-mobile"></div>
+      <div class="reviews-nav">
+        <button class="reviews-arrow" id="reviews-prev-mobile" aria-label="Previous review">&#8249;</button>
+        <div class="reviews-dots" id="reviews-dots-mobile"></div>
+        <button class="reviews-arrow" id="reviews-next-mobile" aria-label="Next review">&#8250;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Catalogue Section -->
+  <main class="catalogue" id="catalogue">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" id="filter-bar">
+      <div class="filter-bar-inner">
+        <div class="category-pills" id="category-pills">
+          <button class="pill active" data-category="all">All Items</button>
+        </div>
+        <div class="results-info" id="results-info"></div>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="products-container">
+      <div class="products-grid" id="products-grid"></div>
+
+      <div class="state-empty" id="state-empty">
+        <div class="state-icon">
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="8" y="16" width="48" height="36" rx="4" stroke="var(--primary)" stroke-width="2"/>
+            <path d="M8 24h48" stroke="var(--primary)" stroke-width="2"/>
+            <path d="M24 8l8 8 8-8" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>No products found</h3>
+        <p>Try adjusting your search or selecting a different category.</p>
+      </div>
+
+      <div class="state-loading" id="state-loading">
+        <div class="spinner"></div>
+        <p>Loading products…</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Product Detail Modal -->
+  <div class="overlay" id="modal-overlay">
+    <div class="modal" id="product-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="/uploads/vb_sales_logo.png" alt="Logo" class="logo-mark footer-logo">
+        <span class="footer-store-name" id="footer-store-name"></span>
+      </div>
+      <div class="footer-contact" id="footer-contact"></div>
+      <p class="footer-note">Items are for viewing only — contact us directly to purchase.</p>
+      <p class="footer-copy">© <span id="footer-year"></span> <span id="footer-copy-name"></span>. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Bookmark Prompt -->
+  <div class="bm-overlay" id="bm-overlay" role="dialog" aria-modal="true" aria-labelledby="bm-title">
+    <div class="bm-modal">
+      <button class="bm-close" id="bm-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="bm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="36" height="36">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <h2 class="bm-title" id="bm-title">Never Miss a Sale!</h2>
+      <p class="bm-text">We update our inventory regularly. Don't ever miss a new sale. Bookmark our catalog!</p>
+      <div class="bm-hint">
+        <span class="bm-hint-row"><kbd>Ctrl</kbd> + <kbd>D</kbd> <span class="bm-hint-label">Windows &amp; Linux</span></span>
+        <span class="bm-divider">·</span>
+        <span class="bm-hint-row"><kbd>⌘</kbd> + <kbd>D</kbd> <span class="bm-hint-label">Mac</span></span>
+      </div>
+      <button class="bm-cta" id="bm-cta">Got it, thanks!</button>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

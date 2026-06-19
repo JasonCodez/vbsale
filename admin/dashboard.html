@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="/uploads/vb_sales_logo.png" alt="Logo" style="height:36px;width:auto;object-fit:contain;border-radius:6px;background:white;padding:2px 4px">
+        <span class="sidebar-title">Admin</span>
+      </div>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Overview
+      </a>
+      <a href="#" class="nav-item" data-page="analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item" data-page="products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        Products
+      </a>
+      <a href="#" class="nav-item" data-page="reviews">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Reviews
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        </svg>
+        Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-user">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div>
+          <div class="admin-name" id="admin-username">Admin</div>
+          <div class="admin-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="logout-btn" title="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile nav bar -->
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <span class="mobile-title">Admin Panel</span>
+    <a href="/" class="mobile-view-link" target="_blank" title="View site">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+  </header>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- Main content -->
+  <main class="main" id="main-content">
+
+    <!-- ── OVERVIEW PAGE ─────────────────────────────────── -->
+    <div class="page" id="page-overview">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Overview</h1>
+          <p class="page-subtitle">Your catalogue at a glance</p>
+        </div>
+        <a href="/" target="_blank" class="btn btn-outline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View Live Site
+        </a>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-label">Total Products</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-in">—</div>
+            <div class="stat-label">In Stock</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-low">—</div>
+            <div class="stat-label">Low Stock (≤ 5)</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-out">—</div>
+            <div class="stat-label">Out of Stock</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2 class="section-title">Recent Products</h2>
+        <button class="btn btn-link" data-page="products">Manage all →</button>
+      </div>
+      <div class="recent-list" id="recent-list">
+        <div class="table-loading">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS PAGE ────────────────────────────────── -->
+    <div class="page hidden" id="page-analytics">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Analytics</h1>
+          <p class="page-subtitle">Site traffic and product engagement</p>
+        </div>
+        <select id="analytics-range" class="select-sm">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+        </select>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-today-views">—</div>
+            <div class="stat-label">Views Today</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-today-visitors">—</div>
+            <div class="stat-label">Visitors Today</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-total-views">—</div>
+            <div class="stat-label">Total Page Views</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value" id="stat-total-visitors">—</div>
+            <div class="stat-label">Total Unique Visitors</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic chart -->
+      <div class="analytics-card">
+        <h3 class="analytics-card-title">Traffic Overview</h3>
+        <div class="chart-legend">
+          <span class="chart-legend-item"><span class="chart-dot chart-dot-views"></span>Page Views</span>
+          <span class="chart-legend-item"><span class="chart-dot chart-dot-visitors"></span>Unique Visitors</span>
+        </div>
+        <div class="chart-wrap" id="traffic-chart"></div>
+      </div>
+
+      <div class="analytics-grid">
+        <!-- Top Products -->
+        <div class="analytics-card">
+          <h3 class="analytics-card-title">Most Viewed Products</h3>
+          <div id="top-products-list" class="analytics-list">
+            <div class="table-loading">Loading…</div>
+          </div>
+        </div>
+
+        <!-- Top Referrers -->
+        <div class="analytics-card">
+          <h3 class="analytics-card-title">Top Referrers</h3>
+          <div id="top-referrers-list" class="analytics-list">
+            <div class="table-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="analytics-card">
+        <h3 class="analytics-card-title">Recent Visits</h3>
+        <div id="recent-visits-list" class="analytics-list">
+          <div class="table-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTS PAGE ─────────────────────────────────── -->
+    <div class="page hidden" id="page-products">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Products</h1>
+          <p class="page-subtitle" id="products-subtitle">Manage your catalogue</p>
+        </div>
+        <button class="btn btn-primary" id="add-product-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Add Product
+        </button>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="table-search-wrap">
+          <svg class="search-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="table-search" placeholder="Search products…" class="table-search">
+        </div>
+        <select id="table-category-filter" class="select-sm">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" id="products-table">
+          <thead>
+            <tr>
+              <th style="width:56px">Image</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th style="width:110px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+        <div class="table-empty hidden" id="table-empty">No products found.</div>
+        <div class="table-loading" id="table-loading">Loading products…</div>
+      </div>
+    </div>
+
+    <!-- ── REVIEWS PAGE ──────────────────────────────────── -->
+    <div class="page hidden" id="page-reviews">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Reviews</h1>
+          <p class="page-subtitle">Manage hero banner customer reviews</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Add Review -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Add Review</h3>
+          <p class="settings-card-desc">Reviews rotate in the hero banner on the public catalogue.</p>
+          <form id="review-form" class="settings-form">
+            <div class="form-group">
+              <label>Customer Name <span class="required">*</span></label>
+              <input type="text" id="r-author" placeholder="e.g. Jane D.">
+            </div>
+            <div class="form-group">
+              <label>Review Text <span class="required">*</span></label>
+              <textarea id="r-text" rows="3" placeholder="What did they say about your products?"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Star Rating <span style="color:var(--text-light);font-weight:400">(optional)</span></label>
+              <div class="star-picker" id="star-picker">
+                <button type="button" class="star-btn" data-val="1">★</button>
+                <button type="button" class="star-btn" data-val="2">★</button>
+                <button type="button" class="star-btn" data-val="3">★</button>
+                <button type="button" class="star-btn" data-val="4">★</button>
+                <button type="button" class="star-btn" data-val="5">★</button>
+              </div>
+              <input type="hidden" id="r-rating" value="">
+            </div>
+            <div class="form-error hidden" id="review-form-error"></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="review-submit">Add Review</button>
+              <span class="save-msg hidden" id="review-save-msg"></span>
+            </div>
+          </form>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Current Reviews</h3>
+          <p class="settings-card-desc">Reviews display in rotation on the public hero banner.</p>
+          <div id="reviews-list"><div class="table-loading">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS PAGE ─────────────────────────────────── -->
+    <div class="page hidden" id="page-settings">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Settings</h1>
+          <p class="page-subtitle">Manage your store info and account</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Store Info -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Store Information</h3>
+          <p class="settings-card-desc">Update what customers see on the public catalogue.</p>
+          <form id="settings-form" class="settings-form">
+            <div class="form-group">
+              <label>Store Name</label>
+              <input type="text" id="s-name" placeholder="My Store">
+            </div>
+            <div class="form-group">
+              <label>Tagline</label>
+              <input type="text" id="s-tagline" placeholder="Quality Products for Every Need">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="s-desc" rows="3" placeholder="A short description of your store…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Contact Email</label>
+              <input type="email" id="s-email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label>Contact Phone</label>
+              <input type="tel" id="s-phone" placeholder="+1 (555) 000-0000">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <span class="save-msg hidden" id="settings-save-msg">Saved!</span>
+            </div>
+          </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Change Password</h3>
+          <p class="settings-card-desc">Update your admin login password.</p>
+          <form id="password-form" class="settings-form">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="p-current" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="p-new" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="p-confirm" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Update Password</button>
+              <span class="save-msg hidden" id="password-save-msg"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── PRODUCT MODAL ──────────────────────────────────── -->
+  <div class="modal-backdrop hidden" id="product-modal-backdrop">
+    <div class="admin-modal" id="product-modal" role="dialog" aria-modal="true">
+      <div class="admin-modal-header">
+        <h2 class="admin-modal-title" id="modal-title">Add Product</h2>
+        <button class="modal-x" id="modal-x">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="product-form">
+          <input type="hidden" id="product-id">
+
+          <!-- Image upload (multi) -->
+          <div class="form-group">
+            <label>Product Images</label>
+            <div class="image-upload-area" id="image-upload-area">
+              <div class="image-thumbs" id="image-thumbs"></div>
+              <input type="file" id="image-file" accept="image/*" style="display:none">
+              <div class="image-add-btn" id="image-add-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                <span>Add Image</span>
+                <span class="upload-hint">PNG, JPG, WebP up to 10MB</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Product Name <span class="required">*</span></label>
+              <input type="text" id="product-name" placeholder="e.g. Blue Ceramic Vase" required>
+            </div>
+            <div class="form-group" style="width:160px">
+              <label>Category</label>
+              <input type="text" id="product-category" placeholder="General" list="category-list">
+              <datalist id="category-list"></datalist>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="product-desc" rows="3" placeholder="Describe this item…"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Facebook Marketplace Link</label>
+            <input type="url" id="product-fb-url" placeholder="https://www.facebook.com/marketplace/item/…">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Price ($)</label>
+              <input type="number" id="product-price" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group flex-1">
+              <label>Stock Quantity <span class="required">*</span></label>
+              <input type="number" id="product-stock" placeholder="0" min="0" step="1" required>
+            </div>
+          </div>
+
+          <div class="form-error hidden" id="product-form-error"></div>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn btn-outline" id="modal-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modal-save">
+          <span id="modal-save-label">Save Product</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELETE CONFIRM ─────────────────────────────────── -->
+  <div class="modal-backdrop hidden" id="delete-modal-backdrop">
+    <div class="admin-modal admin-modal-sm" role="dialog">
+      <div class="admin-modal-header">
+        <h2 class="admin-modal-title">Delete Product</h2>
+        <button class="modal-x" id="delete-modal-x">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <p style="color:#64748B;font-size:0.9rem;line-height:1.6">
+          Are you sure you want to delete <strong id="delete-product-name">"this product"</strong>?
+          This action cannot be undone.
+        </p>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn btn-outline" id="delete-cancel">Cancel</button>
+        <button class="btn btn-danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

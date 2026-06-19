@@ -1,0 +1,17 @@
+{
+  "name": "product-catalogue",
+  "version": "1.0.0",
+  "description": "Business product catalogue with admin backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^2.0.0"
+  }
+}
