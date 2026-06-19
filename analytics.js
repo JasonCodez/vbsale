@@ -1,18 +1,66 @@
-const fs   = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
 const crypto = require('crypto');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-const FILE = path.join(__dirname, 'analytics.json');
+const LOCAL_FILE = path.join(__dirname, 'analytics.json');
 
-function read() {
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); }
-  catch { return { daily: {}, product_views: {}, referrers: {}, recent: [] }; }
+const r2 = new S3Client({
+  region:      'auto',
+  endpoint:    `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+const BUCKET = process.env.R2_BUCKET_NAME;
+const R2_KEY = 'data/analytics.json';
+
+const EMPTY = { daily: {}, product_views: {}, referrers: {}, recent: [] };
+
+let cache = null;
+let dirty = false;
+let flushTimer = null;
+
+async function load() {
+  if (cache) return cache;
+  try {
+    const res = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: R2_KEY }));
+    const body = await res.Body.transformToString();
+    cache = JSON.parse(body);
+  } catch (err) {
+    try {
+      cache = JSON.parse(fs.readFileSync(LOCAL_FILE, 'utf8'));
+    } catch {
+      cache = { ...EMPTY };
+    }
+  }
+  return cache;
 }
 
-function write(data) {
-  const tmp = FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
-  fs.renameSync(tmp, FILE);
+function scheduleFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(async () => {
+    flushTimer = null;
+    if (!dirty || !cache) return;
+    dirty = false;
+    try {
+      await r2.send(new PutObjectCommand({
+        Bucket:      BUCKET,
+        Key:         R2_KEY,
+        Body:        JSON.stringify(cache, null, 2),
+        ContentType: 'application/json',
+      }));
+    } catch (err) {
+      console.error('Analytics R2 flush error:', err);
+      dirty = true;
+    }
+  }, 5000);
+}
+
+function markDirty() {
+  dirty = true;
+  scheduleFlush();
 }
 
 function today() {
@@ -23,10 +71,10 @@ function hashIP(ip) {
   return crypto.createHash('sha256').update(ip + 'catalogue-salt').digest('hex').slice(0, 12);
 }
 
-function recordPageView(ip, referer, userAgent, urlPath) {
-  const data  = read();
-  const date  = today();
-  const vid   = hashIP(ip || 'unknown');
+async function recordPageView(ip, referer, userAgent, urlPath) {
+  const data = await load();
+  const date = today();
+  const vid  = hashIP(ip || 'unknown');
 
   if (!data.daily[date]) data.daily[date] = { views: 0, visitors: [] };
   data.daily[date].views++;
@@ -50,18 +98,18 @@ function recordPageView(ip, referer, userAgent, urlPath) {
   });
   if (data.recent.length > 200) data.recent.length = 200;
 
-  write(data);
+  markDirty();
 }
 
-function recordProductView(productId) {
-  const data = read();
+async function recordProductView(productId) {
+  const data = await load();
   const key  = String(productId);
   data.product_views[key] = (data.product_views[key] || 0) + 1;
-  write(data);
+  markDirty();
 }
 
-function getStats() {
-  const data = read();
+async function getStats() {
+  const data = await load();
   const date = today();
   const d    = data.daily[date] || { views: 0, visitors: [] };
 
@@ -81,8 +129,8 @@ function getStats() {
   };
 }
 
-function getDailyStats(days = 30) {
-  const data   = read();
+async function getDailyStats(days = 30) {
+  const data   = await load();
   const result = [];
   const now    = new Date();
 
@@ -100,24 +148,24 @@ function getDailyStats(days = 30) {
   return result;
 }
 
-function getTopProducts(limit = 10) {
-  const data = read();
+async function getTopProducts(limit = 10) {
+  const data = await load();
   return Object.entries(data.product_views)
     .map(([id, views]) => ({ product_id: Number(id), views }))
     .sort((a, b) => b.views - a.views)
     .slice(0, limit);
 }
 
-function getTopReferrers(limit = 10) {
-  const data = read();
+async function getTopReferrers(limit = 10) {
+  const data = await load();
   return Object.entries(data.referrers)
     .map(([domain, count]) => ({ domain, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
 }
 
-function getRecentVisits(limit = 30) {
-  const data = read();
+async function getRecentVisits(limit = 30) {
+  const data = await load();
   return data.recent.slice(0, limit);
 }
 

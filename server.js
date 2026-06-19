@@ -54,7 +54,7 @@ const requireAuth = (req, res, next) => {
 
 // Analytics — track public page views
 app.use((req, res, next) => {
-  if (req.method === 'GET' && req.path === '/' && !req.path.startsWith('/admin')) {
+  if (req.method === 'GET' && req.path === '/' ) {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     analytics.recordPageView(ip, req.headers.referer, req.headers['user-agent'], req.path);
   }
@@ -97,8 +97,8 @@ app.get('/api/reviews', (req, res) => {
 
 // ── ANALYTICS (public) ───────────────────────────────────────────────────────
 
-app.post('/api/track/product/:id', (req, res) => {
-  analytics.recordProductView(req.params.id);
+app.post('/api/track/product/:id', async (req, res) => {
+  await analytics.recordProductView(req.params.id);
   res.json({ ok: true });
 });
 
@@ -220,21 +220,21 @@ app.delete('/api/admin/upload', requireAuth, async (req, res) => {
 
 // ── ADMIN ANALYTICS ──────────────────────────────────────────────────────────
 
-app.get('/api/admin/analytics/stats', requireAuth, (req, res) => {
-  try { res.json(analytics.getStats()); }
+app.get('/api/admin/analytics/stats', requireAuth, async (req, res) => {
+  try { res.json(await analytics.getStats()); }
   catch { res.status(500).json({ error: 'Failed to fetch stats' }); }
 });
 
-app.get('/api/admin/analytics/daily', requireAuth, (req, res) => {
+app.get('/api/admin/analytics/daily', requireAuth, async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
-    res.json(analytics.getDailyStats(days));
+    res.json(await analytics.getDailyStats(days));
   } catch { res.status(500).json({ error: 'Failed to fetch daily stats' }); }
 });
 
-app.get('/api/admin/analytics/top-products', requireAuth, (req, res) => {
+app.get('/api/admin/analytics/top-products', requireAuth, async (req, res) => {
   try {
-    const products = analytics.getTopProducts(10);
+    const products = await analytics.getTopProducts(10);
     const all = db.getProducts();
     const result = products.map(tp => {
       const p = all.find(x => x.id === tp.product_id);
@@ -244,13 +244,13 @@ app.get('/api/admin/analytics/top-products', requireAuth, (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to fetch top products' }); }
 });
 
-app.get('/api/admin/analytics/referrers', requireAuth, (req, res) => {
-  try { res.json(analytics.getTopReferrers(10)); }
+app.get('/api/admin/analytics/referrers', requireAuth, async (req, res) => {
+  try { res.json(await analytics.getTopReferrers(10)); }
   catch { res.status(500).json({ error: 'Failed to fetch referrers' }); }
 });
 
-app.get('/api/admin/analytics/recent', requireAuth, (req, res) => {
-  try { res.json(analytics.getRecentVisits(30)); }
+app.get('/api/admin/analytics/recent', requireAuth, async (req, res) => {
+  try { res.json(await analytics.getRecentVisits(30)); }
   catch { res.status(500).json({ error: 'Failed to fetch recent visits' }); }
 });
 
