@@ -525,6 +525,27 @@
     });
   }
 
+  // ── Disclaimer modal ───────────────────────────────────────────────────────
+  function initDisclaimer() {
+    const overlay = document.getElementById('disc-overlay');
+    if (!overlay) return;
+
+    const KEY = 'disc_seen';
+    if (sessionStorage.getItem(KEY)) return;
+
+    function close() {
+      overlay.classList.remove('open');
+      sessionStorage.setItem(KEY, '1');
+    }
+
+    setTimeout(() => overlay.classList.add('open'), 500);
+
+    document.getElementById('disc-close').addEventListener('click', close);
+    document.getElementById('disc-cta').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+  }
+
   // ── Bookmark prompt ────────────────────────────────────────────────────────
   function initBookmarkPrompt() {
     const overlay = document.getElementById('bm-overlay');
@@ -553,5 +574,6 @@
   }
 
   init();
+  initDisclaimer();
   initBookmarkPrompt();
 })();
