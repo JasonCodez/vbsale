@@ -531,11 +531,17 @@
     if (!overlay) return;
 
     const KEY = 'disc_seen';
-    if (sessionStorage.getItem(KEY)) return;
+    if (localStorage.getItem(KEY) || sessionStorage.getItem(KEY)) return;
+
+    const checkbox = document.getElementById('disc-remember-check');
 
     function close() {
       overlay.classList.remove('open');
-      sessionStorage.setItem(KEY, '1');
+      if (checkbox && checkbox.checked) {
+        localStorage.setItem(KEY, '1');
+      } else {
+        sessionStorage.setItem(KEY, '1');
+      }
     }
 
     setTimeout(() => overlay.classList.add('open'), 500);
