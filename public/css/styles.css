@@ -1009,13 +1009,13 @@ kbd {
 .disc-icon {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #fff3cd, #ffe69c);
+  background: linear-gradient(135deg, var(--primary-pale), var(--primary-light));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  color: #b8860b;
+  color: var(--primary);
 }
 
 .disc-title {
