@@ -39,6 +39,31 @@ const upload = multer({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// SEO — dynamic sitemap
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const base = protocol + '://' + req.get('host');
+    const products = await db.getProducts();
+    const now = new Date().toISOString().slice(0, 10);
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+    xml += `  <url>\n    <loc>${base}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+    for (const p of products) {
+      const mod = (p.updated_at || p.created_at || now).slice(0, 10);
+      xml += `  <url>\n    <loc>${base}/#product-${p.id}</loc>\n    <lastmod>${mod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+    }
+
+    xml += '</urlset>';
+    res.set('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch {
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
 // Analytics — track public page views (must be before express.static)
 app.use((req, res, next) => {
   if (req.method === 'GET' && req.path === '/') {

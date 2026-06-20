@@ -146,7 +146,6 @@
       if (s.store_tagline) document.getElementById('hero-tagline').textContent = s.store_tagline;
       if (s.store_description) document.getElementById('hero-desc').textContent = s.store_description;
 
-
       const contactEl = document.getElementById('footer-contact');
       if (s.contact_email || s.contact_phone) {
         const parts = [];
@@ -155,7 +154,50 @@
         contactEl.innerHTML = parts.join('');
       }
 
+      updateSEO(s);
     } catch (_) {}
+  }
+
+  function updateSEO(s) {
+    const name = s.store_name || 'My Store';
+    const desc = s.store_description || s.store_tagline || '';
+    const seoDesc = desc + ' Local pickup in Van Buren, Arkansas and surrounding areas.';
+    const url = window.location.origin;
+    const logo = 'https://pub-e39d61149be24eaea7863172db7f17ee.r2.dev/uploads/vb_sales_logo.png';
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.content = val; };
+    const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, val); };
+
+    set('meta-description', seoDesc);
+    setAttr('canonical-link', 'href', url + '/');
+    set('og-title', name);
+    set('og-description', seoDesc);
+    set('og-image', logo);
+    set('og-url', url + '/');
+    set('tw-title', name);
+    set('tw-description', seoDesc);
+    set('tw-image', logo);
+
+    const ldJson = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: name,
+      description: seoDesc,
+      url: url,
+      logo: logo,
+      image: logo,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Van Buren',
+        addressRegion: 'AR',
+        addressCountry: 'US'
+      }
+    };
+    if (s.contact_email) ldJson.email = s.contact_email;
+    if (s.contact_phone) ldJson.telephone = s.contact_phone;
+
+    const ldEl = document.getElementById('ld-json');
+    if (ldEl) ldEl.textContent = JSON.stringify(ldJson);
   }
 
   // ── Products ───────────────────────────────────────────────────────────────
@@ -422,6 +464,28 @@
 
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    const productLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: p.name,
+      description: p.description || p.name,
+      image: imgs.length ? imgs : undefined,
+      offers: {
+        '@type': 'Offer',
+        price: p.price > 0 ? p.price.toFixed(2) : undefined,
+        priceCurrency: 'USD',
+        availability: p.stock > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+        availableAtOrFrom: {
+          '@type': 'Place',
+          name: 'Van Buren, Arkansas'
+        }
+      }
+    };
+    const ldEl = document.getElementById('ld-json');
+    if (ldEl) ldEl.textContent = JSON.stringify(productLd);
   }
 
   function closeModal() {
