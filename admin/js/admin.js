@@ -564,12 +564,13 @@
 
   async function loadAnalytics() {
     try {
-      const [stats, daily, topProducts, referrers, recent] = await Promise.all([
+      const [stats, daily, topProducts, referrers, recent, devices] = await Promise.all([
         api('/api/admin/analytics/stats'),
         api(`/api/admin/analytics/daily?days=${analyticsDays}`),
         api('/api/admin/analytics/top-products'),
         api('/api/admin/analytics/referrers'),
-        api('/api/admin/analytics/recent')
+        api('/api/admin/analytics/recent'),
+        api('/api/admin/analytics/devices')
       ]);
 
       setText('stat-today-views',    stats.today_views);
@@ -577,10 +578,18 @@
       setText('stat-total-views',    stats.total_views);
       setText('stat-total-visitors', stats.total_visitors);
 
+      const botBanner = document.getElementById('bot-banner');
+      const totalBots = (stats.total_bot_views || 0);
+      if (botBanner && totalBots > 0) {
+        botBanner.style.display = '';
+        setText('bot-summary', `${totalBots} bot hit${totalBots !== 1 ? 's' : ''} from ${stats.total_bot_visitors || 0} bot${(stats.total_bot_visitors || 0) !== 1 ? 's' : ''} total`);
+      }
+
       renderTrafficChart(daily);
       renderTopProducts(topProducts);
       renderReferrers(referrers);
       renderRecentVisits(recent);
+      renderDeviceBreakdown(devices);
     } catch (_) {}
   }
 
@@ -639,6 +648,31 @@
       </div>`).join('');
   }
 
+  function renderDeviceBreakdown(devices) {
+    renderBreakdownList('device-browsers', devices.browsers || {});
+    renderBreakdownList('device-os',       devices.os || {});
+    renderBreakdownList('device-types',    devices.types || {});
+  }
+
+  function renderBreakdownList(elId, data) {
+    const el = document.getElementById(elId);
+    const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) {
+      el.innerHTML = '<div class="analytics-empty">No data yet</div>';
+      return;
+    }
+    const total = entries.reduce((s, e) => s + e[1], 0);
+    el.innerHTML = entries.map(([name, count]) => {
+      const pct = Math.round((count / total) * 100);
+      return `<div class="analytics-row">
+        <span class="analytics-row-name">${esc(name)}</span>
+        <div class="analytics-bar-wrap"><div class="analytics-bar-fill" style="width:${pct}%"></div></div>
+        <span class="analytics-pct">${pct}%</span>
+        <span class="analytics-row-value">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
   function renderRecentVisits(visits) {
     const el = document.getElementById('recent-visits-list');
     if (!visits.length) {
@@ -649,15 +683,24 @@
       const time = new Date(v.ts).toLocaleString('en-US', {
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
       });
-      const device = /Mobile|Android|iPhone/i.test(v.ua) ? 'Mobile' : 'Desktop';
+      const browser = v.browser || ((/Mobile|Android|iPhone/i.test(v.ua)) ? 'Mobile' : 'Desktop');
+      const os = v.os || '';
+      const device = v.device || '';
+      const isBot = v.isBot || false;
       const ref = v.referrer ? (() => {
         try { return new URL(v.referrer).hostname.replace(/^www\./, ''); } catch { return ''; }
       })() : '';
 
+      const badgeClass = isBot ? 'badge-bot' : 'badge-in';
+      const badgeLabel = isBot ? 'Bot' : device;
+
       return `<div class="analytics-row">
         <span class="analytics-visit-time">${time}</span>
-        <span class="analytics-visit-path">${esc(v.path)}</span>
-        <span class="badge badge-in" style="font-size:0.68rem">${device}</span>
+        <span class="badge ${badgeClass}" style="font-size:0.68rem">${badgeLabel}</span>
+        <span class="analytics-visit-detail">
+          ${!isBot && browser ? `<span>${esc(browser)}</span>` : ''}
+          ${!isBot && os ? `<span>${esc(os)}</span>` : ''}
+        </span>
         ${ref ? `<span class="analytics-visit-ref">via ${esc(ref)}</span>` : ''}
         <span class="analytics-visit-id" title="Visitor ID">${v.visitor.slice(0, 6)}</span>
       </div>`;

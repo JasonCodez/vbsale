@@ -255,6 +255,11 @@ app.get('/api/admin/analytics/recent', requireAuth, async (req, res) => {
   catch { res.status(500).json({ error: 'Failed to fetch recent visits' }); }
 });
 
+app.get('/api/admin/analytics/devices', requireAuth, async (req, res) => {
+  try { res.json(await analytics.getDeviceStats()); }
+  catch { res.status(500).json({ error: 'Failed to fetch device stats' }); }
+});
+
 app.get('/api/admin/reviews', requireAuth, async (req, res) => {
   try {
     res.json(await db.getReviews());
