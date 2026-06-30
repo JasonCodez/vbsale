@@ -397,11 +397,26 @@
           <button class="gallery-nav gallery-next" id="gallery-next">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="9 6 15 12 9 18"/></svg>
           </button>
+          <button class="img-zoom-btn" id="gallery-zoom-btn" aria-label="Zoom image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
           <div class="gallery-dots" id="gallery-dots">${dotsHTML}</div>
           <div class="gallery-counter" id="gallery-counter">1 / ${imgs.length}</div>
         </div>`;
     } else if (imgs.length === 1) {
-      imgSection = `<img class="modal-img" src="${esc(imgs[0])}" alt="${esc(p.name)}">`;
+      imgSection = `
+        <div class="modal-img-wrap">
+          <img class="modal-img" src="${esc(imgs[0])}" alt="${esc(p.name)}">
+          <button class="img-zoom-btn" aria-label="Zoom image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+        </div>`;
     } else {
       imgSection = `<div class="modal-img-placeholder">${boxIcon(64)}</div>`;
     }
@@ -460,6 +475,15 @@
       dots.querySelectorAll('.gallery-dot').forEach(d => {
         d.addEventListener('click', e => { e.stopPropagation(); go(parseInt(d.dataset.idx)); });
       });
+
+      const zoomBtn = document.getElementById('gallery-zoom-btn');
+      if (zoomBtn) zoomBtn.addEventListener('click', e => { e.stopPropagation(); openLightbox(img.src, img.alt); });
+      img.addEventListener('click', () => openLightbox(img.src, img.alt));
+    } else if (imgs.length === 1) {
+      const singleImg = modalContent.querySelector('.modal-img');
+      const zoomBtn   = modalContent.querySelector('.img-zoom-btn');
+      if (zoomBtn)    zoomBtn.addEventListener('click', e => { e.stopPropagation(); openLightbox(singleImg.src, singleImg.alt); });
+      if (singleImg)  singleImg.addEventListener('click', () => openLightbox(singleImg.src, singleImg.alt));
     }
 
     overlay.classList.add('open');
@@ -486,6 +510,33 @@
     };
     const ldEl = document.getElementById('ld-json');
     if (ldEl) ldEl.textContent = JSON.stringify(productLd);
+  }
+
+  function openLightbox(src, alt) {
+    let lb = document.getElementById('img-lightbox');
+    if (!lb) {
+      lb = document.createElement('div');
+      lb.id = 'img-lightbox';
+      lb.className = 'img-lightbox';
+      lb.innerHTML = `
+        <button class="img-lightbox-close" id="img-lightbox-close" aria-label="Close zoom">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <img class="img-lightbox-img" id="img-lightbox-img" src="" alt="">`;
+      document.body.appendChild(lb);
+      document.getElementById('img-lightbox-close').addEventListener('click', e => { e.stopPropagation(); closeLightbox(); });
+      lb.addEventListener('click', e => { if (e.target === lb || e.target.classList.contains('img-lightbox-img')) closeLightbox(); });
+    }
+    document.getElementById('img-lightbox-img').src = src;
+    document.getElementById('img-lightbox-img').alt = alt || '';
+    lb.classList.add('open');
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById('img-lightbox');
+    if (lb) lb.classList.remove('open');
   }
 
   function closeModal() {
@@ -574,7 +625,11 @@
     });
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') {
+        const lb = document.getElementById('img-lightbox');
+        if (lb && lb.classList.contains('open')) closeLightbox();
+        else closeModal();
+      }
     });
 
     window.addEventListener('scroll', () => {
