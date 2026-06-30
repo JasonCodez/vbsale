@@ -94,7 +94,8 @@ const requireAuth = (req, res, next) => {
 
 app.get('/api/products', async (req, res) => {
   try {
-    res.json(await db.getProducts(req.query));
+    const products = await db.getProducts(req.query);
+    res.json(products.filter(p => p.stock > 0));
   } catch {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
@@ -102,7 +103,11 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/categories', async (req, res) => {
   try {
-    res.json(await db.getCategories());
+    const products = await db.getProducts();
+    const inStockCategories = [...new Set(
+      products.filter(p => p.stock > 0).map(p => p.category)
+    )].sort();
+    res.json(inStockCategories);
   } catch {
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
